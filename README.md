@@ -47,3 +47,11 @@ Switch to the bitwarden user if needed (`su bitwarden`) and navigate to the bitw
 
 ### Stopping the server
 `docker-compose down`
+
+## Updating
+[vaultwarden updating docs](https://github.com/dani-garcia/vaultwarden/wiki/Updating-the-vaultwarden-image)
+```
+docker-compose stop
+docker-compose pull
+docker-compose start
+```
