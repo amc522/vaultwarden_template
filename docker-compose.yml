@@ -4,8 +4,10 @@ services:
   vaultwarden:
     image: vaultwarden/server:latest
     container_name: vaultwarden
+    user: 1000:1000 # user id and group id 1000 are the default id. If the bitwarden user is the first user created (other than root), it will be 1000. Otherwise set the ids to whatever you need
     restart: always
     environment:
+      - ROCKET_PORT=8080
       - DOMAIN=https://<domain>
       - WEBSOCKET_ENABLED=true  # Enable WebSocket notifications.
       - ADMIN_TOKEN=<admin_token>
@@ -17,12 +19,13 @@ services:
       - SMTP_USERNAME=apikey
       - SMTP_PASSWORD=<sendgrid_apikey>
       - SMTP_AUTH_MECHANISM="Login"
+      - SHOW_PASSWORD_HINT=false
       # - SIGNUPS_ALLOWED=false
       # - INVITATIONS_ALLOWED=false
     volumes:
       - ./vw-data:/data
     ports:
-      - "81:80"
+      - "8080:8080"
       - "3012:3012"
 
   nginx: 
@@ -32,11 +35,11 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/vaultwarden.conf:ro
       - ./nginx/error.log:/etc/nginx/error_log.log
       - ./nginx/cache/:/etc/nginx/cache
-      - /etc/letsencrypt/:/etc/letsencrypt/
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
       - ./.htpasswd:/etc/nginx/.htpasswd:ro
     restart: unless-stopped
     ports:
-      - "82:80"
+      - "80:80"
       - "443:443"
     environment:
       - DOMAIN=https://<domain>  # Your domain.

@@ -1,6 +1,10 @@
-# Hosting a bitwarden server with vaultwarden
+# Hosting a bitwarden server with vaultwarden on Ubuntu
 
 ## Server Setup
+### Change ssh port
+In `/etc/ssh/sshd_config`, add `Port <new_port_number>` (or modify the port if the line already exists). This will prevent random attempts at accessing the server through ssh.
+Run `sudo systemctl restart ssh` to restart the ssh service. Next time you ssh in, it will be on the new port.
+
 ### Create user and group
 [Original bitwarden guide](https://bitwarden.com/help/install-on-premise-linux/#create-bitwarden-local-user-and-directory). This is where the user and group setup came from.
 ```
@@ -11,20 +15,28 @@ sudo usermod -aG docker bitwarden
 su bitwarden
 cd ~
 ```
-Everything will be done in the home directory of the bitwarden user. This is assuming that the bitwarden user is used soley for the purpose of running bitwarden.
 
 ### SSL Certificates
 `certbot certonly -d <domain>`
-The certs will be placed in `/etc/letsencrypt/live/<domain>
+The certs will be placed in `/etc/letsencrypt/live/<domain>`
 
 ### Configure docker
-1. Copy the `docker-compose.yml` and `nginx.conf` files from wherever they've been stored.
-2. Open `docker-compose.yml` and replace any instance of `<domain>` with your domain. The domain will be in the form `host.domain.tld`.
-3. Open `nginx.conf` and replace any instance of `<domain>` with your domain, in the same form as before.
+Everything from here on out will assume you are logged in as the user `bitwarden` and starting in the home directory.
+1. `mkdir vaultwarden`
+2. Copy the `docker-compose.yml` and `nginx.conf` files into `~/vaultwarden`.
+3. Open `vaultwarden/docker-compose.yml` and replace any instance of `<domain>` with your domain. The domain will be in the form `host.domain.tld`.
+4. Open `vaultwarden/nginx.conf` and replace any instance of `<domain>` with your domain, in the same form as before.
+5. `mkdir vaultwarden/vw-data`. This needs to be done because vaultwarden will be run as the bitwarden user. If the `vw-data` directory is not created manually, docker will create it using the root user and vaultwarden will not be able to write to that directory.
 
-### Create admin token
+### Setup admin page
 [vaultwarden enabling admin](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page "vaultwarden enabling admin")
-Run `openssl rand -base64 48` and copy the result. Open `docker-compose.yml` and replace `<admin_token>` with the result.
+
+First, generate a token to be used to access the admin page:
+`openssl rand -base64 48`
+ Copy the result, open `docker-compose.yml` and replace `<admin_token>` with the result.
+
+Next is to set a username and password to access the admin site. This is a bit redundant, but gives two layers of security.
+`htpasswd -cB vaultwarden/.htpasswd <username>`
 
 ### Setup SMTP Relay with sendgrid.com
 [vaultwarden SMTP docs](https://github.com/dani-garcia/vaultwarden/wiki/SMTP-Configuration "vaultwarden SMTP docs")
